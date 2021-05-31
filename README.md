@@ -1,4 +1,4 @@
-# rollup-auto-entry
+# rollup-plugin-auto-entry
 
 Automatically discover and group multipe entries in micro bundles.
 
