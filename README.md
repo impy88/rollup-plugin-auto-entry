@@ -1,2 +1,11 @@
 # rollup-auto-entry
-Automatic generation of entry-point by Mask 
+
+Automatically discover and group multipe entries in micro bundles.
+
+## Install
+
+## Usage
+
+## License
+
+MIT
