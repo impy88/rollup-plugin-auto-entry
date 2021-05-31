@@ -1,6 +1,6 @@
 {
   "name": "rollup-plugin-auto-entry",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "publishConfig": {
     "access": "public"
   },
@@ -12,7 +12,8 @@
     "build": "npm run build:main && npm run build:types",
     "build:main": "rollup -c",
     "build:types": "tsc --declarationDir dist --declaration true --emitDeclarationOnly",
-    "prebuild": "rimraf dist"
+    "prebuild": "rimraf dist",
+    "postinstall": "npm run build"
   },
   "repository": {
     "type": "git",
