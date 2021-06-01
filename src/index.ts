@@ -1,7 +1,9 @@
 import * as path from 'path';
 import * as rollup from 'rollup';
-import { isMatch } from 'micromatch';
+import micromatch from 'micromatch';
 
+// micromatch is cjs
+const { isMatch } = micromatch;
 export interface RollupPluginOptions {
   include: string[]
 }
@@ -14,52 +16,49 @@ let options: RollupPluginOptions = {
 
 function isNewEntrypoint(id: string) {
   if (options.include) {
-    for (const key in options.include) {
-      if (isMatch(id, key)) {
-        return true;
-      }
-    }
+    return isMatch(id, options.include);
   }
 
   return false;
 }
 
-export const RollupPluginEntries = (opts: RollupPluginOptions): rollup.Plugin => ({
+export default function autoEntry(opts: RollupPluginOptions): rollup.Plugin {
+  return {
+    name: PLUGIN_NAME,
 
-  name: PLUGIN_NAME,
+    buildStart() {
+      if (opts) {
+        options = { ...options, ...opts };
+      }
+    },
 
-  buildStart() {
-    if (opts) {
-      options = { ...options, ...opts };
-    }
-  },
+    outputOptions(opts) {
+      if (opts.file) {
+        opts.dir = path.dirname(opts.file);
+        delete opts.file;
+      }
 
-  outputOptions(opts) {
-    if (opts.file) {
-      opts.dir = path.dirname(opts.file);
-      delete opts.file;
-    }
+      return opts;
+    },
 
-    return opts;
-  },
+    load(id) {
+      const module = this.getModuleInfo(id);
 
-  load(id) {
-    const module = this.getModuleInfo(id);
+      if (module && module.isEntry) {
+        MODULE_DIR = path.dirname(module.id);
+      }
 
-    if (module && module.isEntry) {
-      MODULE_DIR = path.dirname(module.id);
-    }
+      if (!module?.isEntry && isNewEntrypoint(id)) {
+        this.emitFile({
+          type: 'chunk',
+          id: id,
+          importer: id,
+          fileName: id.replace(`${MODULE_DIR}/`, ''),
+        });
+      }
 
-    if (isNewEntrypoint(id)) {
-      this.emitFile({
-        type: 'chunk',
-        id: id,
-        importer: id,
-        fileName: id.replace(`${MODULE_DIR}/`, ''),
-      });
-    }
+      return null;
 
-    return null;
-
-  },
-})
+    },
+  };
+}
