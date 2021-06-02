@@ -5,7 +5,7 @@ import micromatch from 'micromatch';
 const { isMatch } = micromatch;
 
 export default class Entry {
-  private static _module: string[] = [];
+  private static _modules: string[] = [];
 
   /**
    * Add new module id in reverse order. That helps to
@@ -13,9 +13,11 @@ export default class Entry {
    * @param id
    */
   public static add(id: string) {
-    this._module = this._module
-      .concat(path.dirname(id) + path.sep)
-      .sort((a, b) => b.localeCompare(a));
+    const dirname = path.dirname(id) + path.sep;
+
+    if (!this._modules.includes(dirname)) {
+      this._modules.push(dirname);
+    }
   }
 
   /**
@@ -24,13 +26,14 @@ export default class Entry {
    * @returns stripped filename for entry
    */
   public static getFilenameFor(id: string): string {
-    const r = new RegExp(
-      this._module
-        .join('|')
-        .replace(/\//g, '\\/')
-    );
+    const modules = this._modules
+      .map(s => s
+        .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      )
+      .sort((a, b) => b.localeCompare(a))
+      .join('|');
 
-    return id.replace(r, '');
+    return id.replace(new RegExp(modules), '');
   }
 
   /**
