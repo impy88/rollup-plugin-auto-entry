@@ -4,14 +4,14 @@ import * as rollup from 'rollup';
 import Entry from './entry';
 
 export interface RollupPluginOptions {
-  include: string[]
+  include: string[] | undefined
 }
 
-let options: RollupPluginOptions = {
-  include: []
-}
+export default function autoEntry(opts?: RollupPluginOptions): rollup.Plugin {
+  let options: RollupPluginOptions = {
+    include: undefined
+  };
 
-export default function autoEntry(opts: RollupPluginOptions): rollup.Plugin {
   return {
     name: "rollup-plugin-entries",
 
@@ -37,7 +37,7 @@ export default function autoEntry(opts: RollupPluginOptions): rollup.Plugin {
         Entry.add(module.id);
       }
 
-      if (!module?.isEntry && Entry.isNewEntry(id, options.include)) {
+      if (options.include && !module?.isEntry && Entry.isNewEntry(id, options.include)) {
         this.emitFile({
           type: 'chunk',
           id: id,

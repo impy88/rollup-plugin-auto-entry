@@ -22,6 +22,8 @@ test('generates correct number of bundles with single input', async (t) => {
   const { output } = await bundle.generate({ format: 'esm' });
 
   t.is(output.length, entries.length);
+
+  await bundle.close();
 })
 
 test('generates correct number of bundles with multiple input', async (t) => {
@@ -44,4 +46,22 @@ test('generates correct number of bundles with multiple input', async (t) => {
   const { output } = await bundle.generate({ format: 'esm' });
 
   t.is(output.length, entries.length);
+
+  await bundle.close();
+})
+
+test('generates correct number of bundles if no options were provided', async (t) => {
+  const bundle = await rollup({
+    input: 'test/fixtures/entry1/index.js',
+    cache: false,
+    plugins: [
+      nodeResolve(),
+      autoEntry()
+    ]
+  });
+
+  const { output } = await bundle.generate({ format: 'esm' });
+  t.is(output.length, 1);
+
+  await bundle.close();
 })
