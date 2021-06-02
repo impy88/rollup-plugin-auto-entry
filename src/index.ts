@@ -1,30 +1,19 @@
 import * as path from 'path';
 import * as rollup from 'rollup';
-import micromatch from 'micromatch';
 
-// micromatch is cjs
-const { isMatch } = micromatch;
+import Entry from './entry';
+
 export interface RollupPluginOptions {
   include: string[]
 }
 
-let MODULE_DIR: string;
-const PLUGIN_NAME = "rollup-plugin-entries";
 let options: RollupPluginOptions = {
   include: []
 }
 
-function isNewEntrypoint(id: string) {
-  if (options.include) {
-    return isMatch(id, options.include);
-  }
-
-  return false;
-}
-
 export default function autoEntry(opts: RollupPluginOptions): rollup.Plugin {
   return {
-    name: PLUGIN_NAME,
+    name: "rollup-plugin-entries",
 
     buildStart() {
       if (opts) {
@@ -45,15 +34,15 @@ export default function autoEntry(opts: RollupPluginOptions): rollup.Plugin {
       const module = this.getModuleInfo(id);
 
       if (module && module.isEntry) {
-        MODULE_DIR = path.dirname(module.id);
+        Entry.add(module.id);
       }
 
-      if (!module?.isEntry && isNewEntrypoint(id)) {
+      if (!module?.isEntry && Entry.isNewEntry(id, options.include)) {
         this.emitFile({
           type: 'chunk',
           id: id,
           importer: id,
-          fileName: id.replace(`${MODULE_DIR}/`, ''),
+          fileName: Entry.getFilenameFor(id),
         });
       }
 
