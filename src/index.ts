@@ -49,5 +49,26 @@ export default function autoEntry(opts?: RollupPluginOptions): rollup.Plugin {
       return null;
 
     },
+
+    /**
+     * Generate bundle should keep original file extension
+     * @param _options
+     * @param bundle
+     * @param _isWrite
+     */
+    generateBundle(_options, bundle, _isWrite) {
+      for (const fileName in bundle) {
+        const chunk = bundle[fileName];
+
+        if (chunk.type === "chunk" && chunk.facadeModuleId) {
+          const originalExtension = path.extname(chunk.fileName);
+          const targetExtension = path.extname(chunk.facadeModuleId);
+
+          if (originalExtension !== targetExtension) {
+            chunk.fileName = chunk.fileName.replace(originalExtension, targetExtension);
+          }
+        }
+      }
+    }
   };
 }
