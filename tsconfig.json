@@ -1,12 +1,14 @@
 {
   "compilerOptions": {
+    "outDir": "dist",
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "lib": [
-      "es6"
+      "es6",
+      "ES2019.Object"
     ],
-    "module": "esnext",
+		"module": "CommonJS",
     "moduleResolution": "node",
     "noEmitOnError": false,
     "noUnusedLocals": true,
@@ -14,7 +16,7 @@
     "pretty": true,
     "sourceMap": true,
     "strict": true,
-    "target": "es2017",
+    "target": "es2019",
     "typeRoots": [
       "node_modules/@types"
     ],
@@ -27,6 +29,7 @@
     "node_modules"
   ],
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "test/**/*"
   ]
 }

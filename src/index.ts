@@ -1,74 +1,101 @@
 import * as path from 'path';
 import * as rollup from 'rollup';
-
-import Entry from './entry';
+import fg from 'fast-glob';
 
 export interface RollupPluginOptions {
-  include: string[] | undefined
+  include: string[] | undefined,
+  scope?: string
 }
 
 export default function autoEntry(opts?: RollupPluginOptions): rollup.Plugin {
   let options: RollupPluginOptions = {
-    include: undefined
+    include: undefined,
+    scope: ''
   };
+
+  function getInputOptions(input: rollup.InputOption | undefined):string[]|false {
+    if (typeof input === 'string') {
+      return [input];
+    }
+
+    if (Array.isArray(input)) {
+      return input;
+    }
+
+    return false;
+  }
+
+  function hashCode(s:string) {
+    for (var h = 0, i = 0; i < s.length; h &= h)
+      h = 31 * h + s.charCodeAt(i++);
+    return h;
+  }
+
+  opts = { ...options, ...opts };
 
   return {
     name: "rollup-plugin-entries",
 
-    buildStart() {
-      if (opts) {
-        options = { ...options, ...opts };
+    options(rollupOptions) {
+      const inputOptions = getInputOptions(rollupOptions.input);
+      let resultInput: string[][] = [];
+      if (opts?.include && inputOptions) {
+
+        for (const input of inputOptions) {
+          const cwd = path.dirname(input);
+          const entry = [[
+            path.join(opts!.scope!, path.relative(cwd, input)),
+            input
+          ]];
+
+          const files = fg
+            .sync(opts.include, { cwd, absolute: true,  ignore: [path.relative(cwd, input)] })
+            .map(file => [
+              path.join(opts!.scope!, path.relative(cwd, file)),
+              file
+            ]);
+
+          resultInput = resultInput.concat(entry, files);
+        }
       }
+
+      if (resultInput.length) {
+        rollupOptions.input = resultInput.reduce<{[key: string]: string}>(
+          (acc, [file, path]) => {
+            if (acc[file]) {
+              file = file.replace(/(.*)\.([a-z0-9]{1,3})$/i, `$1-${hashCode(path)}.$2`)
+            }
+            acc[file] = path;
+            return acc;
+          }, {});
+      }
+
+      rollupOptions.preserveEntrySignatures = 'allow-extension';
+
+      return rollupOptions;
     },
 
     outputOptions(opts) {
+      // opts.entryFileNames = '[name]'
+      opts.entryFileNames = chunkInfo => {
+        if (chunkInfo.type === "chunk" && chunkInfo.facadeModuleId) {
+          const name = chunkInfo.name.replace(/\.(?:[a-z0-9]+)$/, '')
+          return `${name}.mjs`
+        }
+        return "[name].mjs";
+      },
+
+      opts.interop = 'esModule';
+      opts.minifyInternalExports = false;
+
       if (opts.file) {
         opts.dir = path.dirname(opts.file);
+        opts.hoistTransitiveImports = false;
+
         delete opts.file;
       }
 
       return opts;
-    },
-
-    load(id) {
-      const module = this.getModuleInfo(id);
-
-      if (module && module.isEntry) {
-        Entry.add(module.id);
-      }
-
-      if (options.include && !module?.isEntry && Entry.isNewEntry(id, options.include)) {
-        this.emitFile({
-          type: 'chunk',
-          id: id,
-          importer: id,
-          fileName: Entry.getFilenameFor(id),
-        });
-      }
-
-      return null;
-
-    },
-
-    /**
-     * Generate bundle should keep original file extension
-     * @param _options
-     * @param bundle
-     * @param _isWrite
-     */
-    generateBundle(_options, bundle, _isWrite) {
-      for (const fileName in bundle) {
-        const chunk = bundle[fileName];
-
-        if (chunk.type === "chunk" && chunk.facadeModuleId) {
-          const originalExtension = path.extname(chunk.fileName);
-          const targetExtension = path.extname(chunk.facadeModuleId);
-
-          if (originalExtension !== targetExtension) {
-            chunk.fileName = chunk.fileName.replace(originalExtension, targetExtension);
-          }
-        }
-      }
     }
   };
 }

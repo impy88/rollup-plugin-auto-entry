@@ -1,6 +1,6 @@
 {
   "name": "rollup-plugin-auto-entry",
-  "version": "1.0.5",
+  "version": "2.0.0",
   "publishConfig": {
     "access": "public"
   },
@@ -9,9 +9,8 @@
   "module": "dist/rollup-plugin-auto-entry.esm.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "npm run build:main && npm run build:types",
+    "build": "npm run build:main",
     "build:main": "rollup -c",
-    "build:types": "tsc --declarationDir dist --declaration true --emitDeclarationOnly",
     "prebuild": "rimraf dist",
     "test": "ava",
     "test:dev": "ava --watch"
@@ -43,40 +42,52 @@
     "LICENSE"
   ],
   "peerDependencies": {
-    "rollup": "^1.20.0||^2.0.0"
+    "rollup": "^1.20.0||^2.0.0||^3.0.0",
+    "fast-glob": "^2.0.0"
   },
   "devDependencies": {
-    "@ava/babel": "^1.0.1",
-    "@ava/typescript": "^1.1.1",
-    "@rollup/plugin-node-resolve": "^13.0.0",
-    "@rollup/plugin-typescript": "^8.2.1",
+    "@ava/babel": "^2.0.0",
+    "@ava/typescript": "^3.0.1",
+    "@rollup/plugin-node-resolve": "^15.0.0",
+    "@rollup/plugin-typescript": "^11.0.0",
     "@types/micromatch": "^4.0.1",
-    "@types/node": "^15.6.1",
-    "ava": "^3.15.0",
+    "@types/node": "^18.0.0",
+    "ava": "^5.1.0",
     "esm": "^3.2.25",
-    "fast-glob": "^3.2.5",
-    "rimraf": "^3.0.2",
-    "rollup": "^2.50.5",
-    "ts-node": "^10.0.0",
-    "tslib": "~2.0.0",
-    "typescript": "~4.1.2"
+    "fast-glob": "^3.2.12",
+    "rimraf": "^4.0.0",
+    "rollup": "^3.12.0",
+    "ts-node": "^10.9.0",
+    "tslib": "~2.5.0",
+    "typescript": "~4.9.0"
+  },
+  "engines" : {
+    "npm" : ">=8.0.0",
+    "node" : ">=18.0.0"
   },
   "ava": {
+    "typescript": {
+			"compile": "tsc",
+			"rewritePaths": {
+				"src/": "dist/"
+			}
+		},
+    "nodeArguments": [
+      "--loader=ts-node/esm",
+      "--experimental-specifier-resolution=node"
+    ],
     "ignoredByWatcher": [
       "dist/**/*"
-    ],
-    "babel": {
-      "compileEnhancements": false
-    },
-    "extensions": [
-      "ts"
-    ],
-    "require": [
-      "esm",
-      "ts-node/register"
     ],
     "files": [
       "!**/fixtures/**"
     ]
+  },
+  "exports": {
+    "node": {
+      "module": "./dist/rollup-plugin-auto-entry.esm.js",
+      "require": "./dist/rollup-plugin-auto-entry.cjs.js"
+    },
+    "default": "./dist/rollup-plugin-auto-entry.cjs.js"
   }
 }
