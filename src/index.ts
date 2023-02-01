@@ -44,7 +44,7 @@ export default function autoEntry(opts?: RollupPluginOptions): rollup.Plugin {
         for (const input of inputOptions) {
           const cwd = path.dirname(input);
           const entry = [[
-            path.join(opts!.scope!, path.relative(cwd, input)),
+            path.join(opts.scope!, path.relative(cwd, input)),
             input
           ]];
 
@@ -76,7 +76,6 @@ export default function autoEntry(opts?: RollupPluginOptions): rollup.Plugin {
     },
 
     outputOptions(opts) {
-      // opts.entryFileNames = '[name]'
       opts.entryFileNames = chunkInfo => {
         if (chunkInfo.type === "chunk" && chunkInfo.facadeModuleId) {
           const name = chunkInfo.name.replace(/\.(?:[a-z0-9]+)$/, '')
